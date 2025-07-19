@@ -13,6 +13,8 @@ function App() {
   const [scannedRoom, setScannedRoom] = useState(null)
   const [selectedItem, setSelectedItem] = useState(null)
 
+  const API_BASE_URL = 'https://room-organizer-backend.onrender.com'; // New Backend URL
+
   const HomeScreen = () => (
     <div className="p-6 space-y-6">
       <div className="text-center space-y-2">
@@ -163,6 +165,7 @@ function App() {
       <ProductRecommendations 
         roomData={scannedRoom}
         selectedItem={selectedItem}
+        apiBaseUrl={API_BASE_URL}
       />
     </div>
   )
@@ -233,4 +236,6 @@ function App() {
 }
 
 export default App
+
+
 

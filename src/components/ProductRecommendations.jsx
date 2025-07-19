@@ -1,72 +1,97 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Button } from '@/components/ui/button.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { Star, ExternalLink, Heart, ShoppingCart } from 'lucide-react'
 
-const ProductRecommendations = ({ roomData, selectedItem }) => {
+const ProductRecommendations = ({ roomData, selectedItem, apiBaseUrl }) => {
   const [favorites, setFavorites] = useState(new Set())
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  // Mock product data with affiliate links
-  const products = [
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch(`${apiBaseUrl}/api/products`)
+        if (response.ok) {
+          const data = await response.json()
+          setProducts(data)
+        } else {
+          // Fallback to mock data if API fails
+          setProducts(mockProducts)
+        }
+      } catch (error) {
+        console.error('Failed to fetch products:', error)
+        // Fallback to mock data
+        setProducts(mockProducts)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [apiBaseUrl])
+
+  // Mock product data as fallback
+  const mockProducts = [
     {
       id: 1,
       name: 'IKEA ALGOT Storage System',
       price: 89.99,
-      originalPrice: 109.99,
+      original_price: 109.99,
       rating: 4.5,
       reviews: 1247,
       image: '🗄️',
       category: 'storage',
       description: 'Modular storage system perfect for organizing any room',
-      affiliateLink: 'https://www.ikea.com/us/en/p/algot-shelf-unit-white-s49022093/?affiliate=roomscan',
+      affiliate_link: 'https://www.ikea.com/us/en/p/algot-shelf-unit-white-s49022093/?affiliate=roomscan',
       merchant: 'IKEA',
-      inStock: true,
+      in_stock: true,
       features: ['Adjustable shelves', 'Easy assembly', 'Durable metal construction']
     },
     {
       id: 2,
       name: 'Container Store Elfa Shelving',
       price: 159.99,
-      originalPrice: 199.99,
+      original_price: 199.99,
       rating: 4.8,
       reviews: 892,
       image: '📚',
       category: 'storage',
       description: 'Premium modular shelving system for maximum organization',
-      affiliateLink: 'https://www.containerstore.com/s/elfa/elfa-shelving?affiliate=roomscan',
+      affiliate_link: 'https://www.containerstore.com/s/elfa/elfa-shelving?affiliate=roomscan',
       merchant: 'The Container Store',
-      inStock: true,
+      in_stock: true,
       features: ['Lifetime warranty', 'Custom configurations', 'Professional installation']
     },
     {
       id: 3,
       name: 'Wayfair Storage Ottoman',
       price: 79.99,
-      originalPrice: 99.99,
+      original_price: 99.99,
       rating: 4.3,
       reviews: 2156,
       image: '🪑',
       category: 'furniture',
       description: 'Multi-functional ottoman with hidden storage compartment',
-      affiliateLink: 'https://www.wayfair.com/furniture/pdp/storage-ottoman?affiliate=roomscan',
+      affiliate_link: 'https://www.wayfair.com/furniture/pdp/storage-ottoman?affiliate=roomscan',
       merchant: 'Wayfair',
-      inStock: true,
+      in_stock: true,
       features: ['Hidden storage', 'Comfortable seating', 'Multiple colors available']
     },
     {
       id: 4,
       name: 'Amazon Basics Storage Bins',
       price: 24.99,
-      originalPrice: 34.99,
+      original_price: 34.99,
       rating: 4.2,
       reviews: 5432,
       image: '📦',
       category: 'storage',
       description: 'Set of 6 collapsible fabric storage bins with handles',
-      affiliateLink: 'https://amazon.com/dp/B07EXAMPLE?tag=roomscan-20',
+      affiliate_link: 'https://amazon.com/dp/B07EXAMPLE?tag=roomscan-20',
       merchant: 'Amazon',
-      inStock: true,
+      in_stock: true,
       features: ['Collapsible design', 'Reinforced handles', 'Machine washable']
     }
   ]
@@ -81,11 +106,26 @@ const ProductRecommendations = ({ roomData, selectedItem }) => {
     setFavorites(newFavorites)
   }
 
-  const handleAffiliateClick = (product) => {
-    // In a real app, this would track the click for analytics
-    console.log(`Affiliate click tracked for ${product.name}`)
+  const handleAffiliateClick = async (product) => {
+    try {
+      // Track the click with the backend
+      await fetch(`${apiBaseUrl}/api/products/${product.id}/click`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: 'anonymous', // In a real app, this would be the actual user ID
+          room_data: roomData,
+          selected_item: selectedItem
+        })
+      })
+    } catch (error) {
+      console.error('Failed to track affiliate click:', error)
+    }
+    
     // Open affiliate link
-    window.open(product.affiliateLink, '_blank')
+    window.open(product.affiliate_link, '_blank')
   }
 
   const renderStars = (rating) => {
@@ -107,6 +147,27 @@ const ProductRecommendations = ({ roomData, selectedItem }) => {
     }
     
     return stars
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-4">
+              <div className="flex space-x-4">
+                <div className="w-20 h-20 bg-gray-200 rounded-lg"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
   }
 
   return (
@@ -139,7 +200,7 @@ const ProductRecommendations = ({ roomData, selectedItem }) => {
               <div className="flex space-x-4">
                 {/* Product Image */}
                 <div className="w-20 h-20 bg-slate-100 rounded-lg flex items-center justify-center text-3xl flex-shrink-0">
-                  {product.image}
+                  {product.image || '📦'}
                 </div>
 
                 {/* Product Details */}
@@ -171,13 +232,13 @@ const ProductRecommendations = ({ roomData, selectedItem }) => {
                       {renderStars(product.rating)}
                     </div>
                     <span className="text-sm text-slate-600">
-                      {product.rating} ({product.reviews.toLocaleString()} reviews)
+                      {product.rating} ({(product.reviews || 0).toLocaleString()} reviews)
                     </span>
                   </div>
 
                   {/* Features */}
                   <div className="flex flex-wrap gap-1">
-                    {product.features.slice(0, 2).map((feature, index) => (
+                    {(product.features || []).slice(0, 2).map((feature, index) => (
                       <Badge key={index} variant="secondary" className="text-xs">
                         {feature}
                       </Badge>
@@ -191,15 +252,15 @@ const ProductRecommendations = ({ roomData, selectedItem }) => {
                         <span className="text-2xl font-bold text-green-600">
                           ${product.price}
                         </span>
-                        {product.originalPrice > product.price && (
+                        {product.original_price && product.original_price > product.price && (
                           <span className="text-sm text-slate-500 line-through">
-                            ${product.originalPrice}
+                            ${product.original_price}
                           </span>
                         )}
                       </div>
                       <div className="flex items-center space-x-2">
                         <span className="text-xs text-slate-600">at {product.merchant}</span>
-                        {product.inStock && (
+                        {product.in_stock && (
                           <Badge variant="outline" className="text-xs text-green-600 border-green-600">
                             In Stock
                           </Badge>
@@ -254,4 +315,5 @@ const ProductRecommendations = ({ roomData, selectedItem }) => {
 }
 
 export default ProductRecommendations
+
 
